@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">RoamVibing</title>
+  <desc id="desc">RoamVibing coder-at-laptop logo for vibe-coding sessions.</desc>
+  <defs>
+    <linearGradient id="background" x1="128" y1="128" x2="896" y2="896" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#111827"/>
+      <stop offset="0.55" stop-color="#153b3c"/>
+      <stop offset="1" stop-color="#0b1719"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="248" y1="398" x2="776" y2="676" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#101820"/>
+      <stop offset="1" stop-color="#16242a"/>
+    </linearGradient>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="218" fill="url(#background)"/>
+  <circle cx="512" cy="306" r="86" fill="#f2b46d"/>
+  <path d="M354 466c24-86 84-130 158-130s134 44 158 130v82H354z" fill="#2dd4bf"/>
+  <path d="M304 392c44-92 111-138 208-138s164 46 208 138c-38-30-79-47-123-52-27-37-55-55-85-55s-58 18-85 55c-44 5-85 22-123 52z" fill="#0f766e"/>
+  <rect x="232" y="430" width="560" height="328" rx="44" fill="#e7edf0"/>
+  <rect x="276" y="474" width="472" height="228" rx="28" fill="url(#screen)"/>
+  <path d="M408 586l-72-56 72-56" fill="none" stroke="#7dd3fc" stroke-width="35" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M616 474l72 56-72 56" fill="none" stroke="#7dd3fc" stroke-width="35" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M548 466l-70 128" fill="none" stroke="#a7f3d0" stroke-width="35" stroke-linecap="round"/>
+  <path d="M190 746h644l72 94H118z" fill="#cbd5df"/>
+  <path d="M424 774h176l26 36H398z" fill="#94a3b8"/>
+  <circle cx="306" cy="628" r="32" fill="#f2b46d"/>
+  <circle cx="718" cy="628" r="32" fill="#f2b46d"/>
+</svg>
