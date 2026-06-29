@@ -42,17 +42,13 @@ The menu app is signed as a local-only app without App Sandbox. Closed-Lid Mode 
 
 The zip is built from the strictly verified staging app and then extracted into `/private/tmp` for a final strict codesign check.
 
-## Touch ID Helper
+## Security & Permissions
 
-RoamVibing can be built with an optional privileged helper for Closed-Lid Mode. Installing that Touch ID Helper requires one-time administrator approval. After the helper is installed, approved, and enabled, macOS device-owner approval can offer Touch ID first and fall back to your Mac password before RoamVibing changes Closed-Lid Mode.
+Closed-Lid Mode changes a protected macOS power setting. Depending on how the app was built and installed, macOS may ask for administrator approval, Touch ID, or your Mac password before RoamVibing changes that setting.
 
-The default build does not include the helper and keeps the administrator-password flow. Helper-enabled builds must be installed under `/Applications`; RoamVibing refuses to register the helper from other paths, including symlink escapes. Helper-enabled release builds must be notarized and stapled.
+RoamVibing does not include network client/server code, network listeners, remote-control APIs, event taps, or Accessibility/Input Monitoring access. Closed-Lid Mode uses fixed `/usr/bin/pmset` commands and verifies the macOS power state after changing it.
 
-For local testing on a Mac with only an Apple Development signing identity, build with `ROAMVIBING_ENABLE_PRIVILEGED_HELPER=1` and `ROAMVIBING_SKIP_NOTARIZATION=1`, install `dist/RoamVibing.app` into `/Applications`, then run `./scripts/install-local-touchid-helper.sh`. This is local-only and must not be distributed.
-
-Rollback is intentionally direct. Turn off `Use Touch ID Helper` to return to the administrator-password flow, then choose `Uninstall Touch ID Helper` to remove the LaunchDaemon registration. For a helper installed with `scripts/install-local-touchid-helper.sh`, run `./scripts/uninstall-local-touchid-helper.sh`. For an enabled helper, uninstall disables Closed-Lid Mode before unregistering and verifies it is safely disabled; if that safety step fails, the helper stays registered and RoamVibing shows an error. A pending or unapproved helper can be unregistered without trying the helper XPC path.
-
-See `docs/privileged-helper-security.md` for the security boundary, build requirements, and rollback details.
+See `docs/privileged-helper-security.md` for the detailed security boundary, privileged install path, build requirements, and rollback details.
 
 ## Safety
 
