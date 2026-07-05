@@ -552,8 +552,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         instantPopup.setAccessibilityLabel("Safety delay")
         instantPopup.setAccessibilityHelp("Choose the Closed-Lid Mode safety delay before activity can trigger an instant lock.")
 
-        let muteCheckboxTitle = "Enabled"
-        let muteCheckbox = NSButton(checkboxWithTitle: muteCheckboxTitle, target: nil, action: nil)
+        let muteCheckbox = NSButton(checkboxWithTitle: "Enabled", target: nil, action: nil)
         muteCheckbox.state = mutePolicy.isEnabled ? .on : .off
         muteCheckbox.setAccessibilityLabel("Enable Mute on Lid Close")
         muteCheckbox.setAccessibilityHelp("Mutes supported active audio outputs when the lid closes during a RoamVibing session.")

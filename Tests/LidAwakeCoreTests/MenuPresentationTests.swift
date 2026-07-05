@@ -25,6 +25,7 @@ final class MenuPresentationTests: XCTestCase {
         XCTAssertFalse(menuSource.contains("title: \"Uninstall Touch ID Helper\""))
 
         XCTAssertTrue(settingsSource.contains("Battery Safety"))
+        XCTAssertTrue(settingsSource.contains("Thermal Safety"))
         XCTAssertTrue(settingsSource.contains("Instant Lock on Activity"))
         XCTAssertTrue(settingsSource.contains("Mute on Lid Close"))
         XCTAssertTrue(settingsSource.contains("Emergency Reset"))
@@ -66,6 +67,8 @@ final class MenuPresentationTests: XCTestCase {
         XCTAssertTrue(source.contains("guard runSettingsPanel(sections:"))
         XCTAssertTrue(source.contains("title: \"Battery Safety\""))
         XCTAssertTrue(source.contains("description: \"Stops the RoamVibing session below your threshold while on battery so macOS can sleep normally.\""))
+        XCTAssertTrue(source.contains("title: \"Thermal Safety\""))
+        XCTAssertTrue(source.contains("description: \"Stops the RoamVibing session when macOS reports serious heat pressure so the Mac can cool down and sleep normally.\""))
         XCTAssertTrue(source.contains("title: \"Instant Lock on Activity\""))
         XCTAssertTrue(source.contains("description: \"Only applies to Closed-Lid Mode. After the safety delay, reopening the lid or using the keyboard or mouse locks the screen and turns RoamVibing off. Normal Awake does not use this lock.\""))
         XCTAssertTrue(source.contains("title: \"Mute on Lid Close\""))
@@ -109,7 +112,7 @@ final class MenuPresentationTests: XCTestCase {
     func testSettingsDialogsUseShortCheckboxLabels() throws {
         let source = try readText("Sources/LidAwake/AppDelegate.swift")
 
-        XCTAssertEqual(source.components(separatedBy: "checkboxWithTitle: \"Enabled\"").count - 1, 3)
+        XCTAssertEqual(source.components(separatedBy: "checkboxWithTitle: \"Enabled\"").count - 1, 4)
         XCTAssertFalse(source.contains("checkboxWithTitle: \"Lock screen when keyboard or mouse input is detected\""))
         XCTAssertFalse(source.contains("checkboxWithTitle: \"Allow sleep when battery is low\""))
     }
@@ -118,9 +121,11 @@ final class MenuPresentationTests: XCTestCase {
         let source = try readText("Sources/LidAwake/AppDelegate.swift")
 
         XCTAssertTrue(source.contains("batterySafetySettings.policy = LowBatteryPolicy("))
+        XCTAssertTrue(source.contains("thermalSafetySettings.policy = ThermalSafetyPolicy("))
         XCTAssertTrue(source.contains("instantActivityLockSettings.policy = InstantActivityLockPolicy("))
         XCTAssertTrue(source.contains("muteOnLidCloseSettings.policy = MuteOnLidClosePolicy("))
         XCTAssertTrue(source.contains("lowBatteryGuard.policy = batterySafetySettings.policy"))
+        XCTAssertTrue(source.contains("thermalSafetyGuard.policy = thermalSafetySettings.policy"))
         XCTAssertTrue(source.contains("instantActivityLockGuard.policy = instantActivityLockSettings.policy"))
         XCTAssertTrue(source.contains("muteOnLidCloseGuard.policy = muteOnLidCloseSettings.policy"))
         XCTAssertTrue(source.contains("if helperCheckbox.isEnabled {"))
@@ -132,6 +137,7 @@ final class MenuPresentationTests: XCTestCase {
 
         XCTAssertTrue(source.contains("batteryCheckbox.setAccessibilityLabel(\"Enable Battery Safety\")"))
         XCTAssertTrue(source.contains("batteryPopup.setAccessibilityLabel(\"Battery threshold\")"))
+        XCTAssertTrue(source.contains("thermalCheckbox.setAccessibilityLabel(\"Enable Thermal Safety\")"))
         XCTAssertTrue(source.contains("instantCheckbox.setAccessibilityLabel(\"Enable Instant Lock on Activity\")"))
         XCTAssertTrue(source.contains("instantCheckbox.setAccessibilityHelp(\"Only applies to Closed-Lid Mode. Normal Awake does not use this lock.\")"))
         XCTAssertTrue(source.contains("instantPopup.setAccessibilityLabel(\"Safety delay\")"))
@@ -152,6 +158,8 @@ final class MenuPresentationTests: XCTestCase {
         XCTAssertTrue(source.contains("style: .warning"))
         XCTAssertTrue(source.contains("title: \"Battery Safety Blocked RoamVibing Session\","))
         XCTAssertTrue(source.contains("title: \"Battery Safety Stopped \\(Brand.appName)\","))
+        XCTAssertTrue(source.contains("title: \"Thermal Safety Blocked RoamVibing Session\","))
+        XCTAssertTrue(source.contains("title: \"Thermal Safety Stopped \\(Brand.appName)\","))
     }
 
     func testMenuTitlesDoNotUseTrailingEllipsesAsGenericDecoration() throws {
