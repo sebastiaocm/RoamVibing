@@ -160,7 +160,8 @@ final class MenuPresentationTests: XCTestCase {
         XCTAssertTrue(source.contains("title: \"Battery Safety Stopped \\(Brand.appName)\","))
         XCTAssertTrue(source.contains("title: \"Thermal Safety Blocked RoamVibing Session\","))
         XCTAssertTrue(source.contains("title: \"Thermal Safety Stopped \\(Brand.appName)\","))
-        XCTAssertTrue(source.contains("Thermal Safety uses macOS thermal pressure and turns RoamVibing off when the system reports serious heat pressure."))
+        XCTAssertTrue(source.contains("Thermal Safety uses macOS thermal pressure and stops the RoamVibing session when the system reports serious or critical thermal pressure."))
+        XCTAssertTrue(source.contains("It releases wake blockers so the Mac can cool down and sleep normally."))
         XCTAssertTrue(source.contains("It does not read raw CPU or GPU temperatures."))
     }
 

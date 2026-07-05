@@ -719,7 +719,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             Use it only on a stable, ventilated surface. Do not put the Mac in a bag while this is enabled. Turn it off before traveling or leaving the machine unattended on battery power.
 
-            Thermal Safety uses macOS thermal pressure and turns RoamVibing off when the system reports serious heat pressure. It does not read raw CPU or GPU temperatures.
+            Thermal Safety uses macOS thermal pressure and stops the RoamVibing session when the system reports serious or critical thermal pressure. It releases wake blockers so the Mac can cool down and sleep normally. It does not read raw CPU or GPU temperatures.
 
             Instant Lock on Activity polls macOS idle-time counters only. It does not read keystrokes, capture mouse events, or request Accessibility/Input Monitoring permissions.
             """,

@@ -128,7 +128,8 @@ final class InstantActivityLockAppWiringTests: XCTestCase {
         XCTAssertTrue(readme.contains("Thermal Safety"))
         XCTAssertTrue(readme.contains("serious or critical thermal pressure"))
         XCTAssertTrue(readme.contains("uses macOS thermal pressure instead of raw temperature"))
-        XCTAssertTrue(readme.contains("default is on"))
+        XCTAssertTrue(readme.contains("`Thermal Safety`: stops the RoamVibing session when macOS reports serious or critical thermal pressure. The default is on."))
+        XCTAssertTrue(readme.contains("releases wake blockers"))
     }
 
     private func readText(_ relativePath: String) throws -> String {
