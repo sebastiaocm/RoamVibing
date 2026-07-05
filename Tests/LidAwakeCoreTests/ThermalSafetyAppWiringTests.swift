@@ -28,9 +28,14 @@ final class ThermalSafetyAppWiringTests: XCTestCase {
 
     func testAppDelegateWiresThermalSafetyTimerAndGuard() throws {
         let source = try readText("Sources/LidAwake/AppDelegate.swift")
+        let thermalSafetyEnum = try section(
+            in: source,
+            from: "private enum ThermalSafety",
+            to: "private enum InstantLock"
+        )
 
         XCTAssertTrue(source.contains("private enum ThermalSafety"))
-        XCTAssertTrue(source.contains("static let checkInterval: TimeInterval = 30"))
+        XCTAssertTrue(thermalSafetyEnum.contains("static let checkInterval: TimeInterval = 30"))
         XCTAssertTrue(source.contains("private let thermalSafetySettings = ThermalSafetySettingsStore()"))
         XCTAssertTrue(source.contains("private let thermalStateReader = MacThermalStateReader()"))
         XCTAssertTrue(source.contains("private var thermalSafetyTimer: Timer?"))
@@ -54,6 +59,48 @@ final class ThermalSafetyAppWiringTests: XCTestCase {
         XCTAssertTrue(source.contains("state.shouldStopRoamVibingSession"))
         XCTAssertTrue(source.contains("title: \"Thermal Safety Blocked RoamVibing Session\""))
         XCTAssertTrue(source.contains("macOS reports \\(thermalStateDescription(state)) thermal pressure"))
+    }
+
+    func testAppDelegateWiresThermalSafetySettingsCheckbox() throws {
+        let source = try readText("Sources/LidAwake/AppDelegate.swift")
+        let showSettings = try section(
+            in: source,
+            from: "@objc private func showSettings()",
+            to: "@objc private func disableClosedLidBypassFromSettings"
+        )
+
+        XCTAssertTrue(showSettings.contains("let thermalPolicy = thermalSafetySettings.policy"))
+        XCTAssertTrue(showSettings.contains("let thermalCheckbox = NSButton(checkboxWithTitle: \"Enabled\", target: nil, action: nil)"))
+        XCTAssertTrue(showSettings.contains("thermalCheckbox.state = thermalPolicy.isEnabled ? .on : .off"))
+        XCTAssertTrue(showSettings.contains("thermalCheckbox.setAccessibilityLabel(\"Enable Thermal Safety\")"))
+        XCTAssertTrue(showSettings.contains("thermalCheckbox.setAccessibilityHelp(\"Stops the RoamVibing session when macOS reports serious heat pressure.\")"))
+        XCTAssertTrue(showSettings.contains("title: \"Thermal Safety\""))
+        XCTAssertTrue(showSettings.contains("description: \"Stops the RoamVibing session when macOS reports serious heat pressure so the Mac can cool down and sleep normally.\""))
+        XCTAssertTrue(showSettings.contains("thermalSafetySettings.policy = ThermalSafetyPolicy(isEnabled: thermalCheckbox.state == .on)"))
+        XCTAssertTrue(showSettings.contains("thermalSafetyGuard.policy = thermalSafetySettings.policy"))
+        XCTAssertTrue(showSettings.contains("evaluateBatterySafety()\n        evaluateThermalSafety()"))
+    }
+
+    func testAppDelegateRateLimitsThermalSafetyErrorsUntilSuccessfulEvaluation() throws {
+        let source = try readText("Sources/LidAwake/AppDelegate.swift")
+        let evaluateThermalSafety = try section(
+            in: source,
+            from: "private func evaluateThermalSafety()",
+            to: "private func evaluateInstantActivityLock()"
+        )
+
+        XCTAssertTrue(source.contains("private var hasShownThermalSafetyError = false"))
+        XCTAssertTrue(evaluateThermalSafety.contains("case .noAction:\n                hasShownThermalSafetyError = false\n                return"))
+        XCTAssertTrue(evaluateThermalSafety.contains("case let .stoppedSession(state):\n                hasShownThermalSafetyError = false"))
+        XCTAssertTrue(evaluateThermalSafety.contains("if hasShownThermalSafetyError {\n                return\n            }"))
+        XCTAssertTrue(evaluateThermalSafety.contains("hasShownThermalSafetyError = true"))
+        XCTAssertTrue(evaluateThermalSafety.contains("presentError(error, title: \"Could Not Apply Thermal Safety\")"))
+    }
+
+    private func section(in source: String, from start: String, to end: String) throws -> String {
+        let startRange = try XCTUnwrap(source.range(of: start))
+        let endRange = try XCTUnwrap(source[startRange.upperBound...].range(of: end))
+        return String(source[startRange.lowerBound..<endRange.lowerBound])
     }
 
     private func readText(_ relativePath: String) throws -> String {

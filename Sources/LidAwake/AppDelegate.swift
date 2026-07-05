@@ -114,6 +114,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var instantActivityLockTimer: Timer?
     private var isShowingLowBatteryAlert = false
     private var isShowingThermalSafetyAlert = false
+    private var hasShownThermalSafetyError = false
     private var activePowerOperation: PowerOperation?
     private var activeHelperOperation: HelperOperation?
     private lazy var session = makeSession()
@@ -497,6 +498,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func showSettings() {
         let batteryPolicy = batterySafetySettings.policy
+        let thermalPolicy = thermalSafetySettings.policy
         let instantPolicy = instantActivityLockSettings.policy
         let mutePolicy = muteOnLidCloseSettings.policy
         let helperStatus = PrivilegedHelperInstaller().status
@@ -523,6 +525,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         batteryPopup.setAccessibilityLabel("Battery threshold")
         batteryPopup.setAccessibilityHelp("Choose the battery percentage where RoamVibing stops the session.")
 
+        let thermalCheckbox = NSButton(checkboxWithTitle: "Enabled", target: nil, action: nil)
+        thermalCheckbox.state = thermalPolicy.isEnabled ? .on : .off
+        thermalCheckbox.setAccessibilityLabel("Enable Thermal Safety")
+        thermalCheckbox.setAccessibilityHelp("Stops the RoamVibing session when macOS reports serious heat pressure.")
+
         let instantCheckbox = NSButton(checkboxWithTitle: "Enabled", target: nil, action: nil)
         instantCheckbox.state = instantPolicy.isEnabled ? .on : .off
         instantCheckbox.setAccessibilityLabel("Enable Instant Lock on Activity")
@@ -545,7 +552,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         instantPopup.setAccessibilityLabel("Safety delay")
         instantPopup.setAccessibilityHelp("Choose the Closed-Lid Mode safety delay before activity can trigger an instant lock.")
 
-        let muteCheckbox = NSButton(checkboxWithTitle: "Enabled", target: nil, action: nil)
+        let muteCheckboxTitle = "Enabled"
+        let muteCheckbox = NSButton(checkboxWithTitle: muteCheckboxTitle, target: nil, action: nil)
         muteCheckbox.state = mutePolicy.isEnabled ? .on : .off
         muteCheckbox.setAccessibilityLabel("Enable Mute on Lid Close")
         muteCheckbox.setAccessibilityHelp("Mutes supported active audio outputs when the lid closes during a RoamVibing session.")
@@ -596,6 +604,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 ]
             ),
             settingsSection(
+                title: "Thermal Safety",
+                description: "Stops the RoamVibing session when macOS reports serious heat pressure so the Mac can cool down and sleep normally.",
+                controls: [
+                    thermalCheckbox
+                ]
+            ),
+            settingsSection(
                 title: "Instant Lock on Activity",
                 description: "Only applies to Closed-Lid Mode. After the safety delay, reopening the lid or using the keyboard or mouse locks the screen and turns RoamVibing off. Normal Awake does not use this lock.",
                 controls: [
@@ -639,6 +654,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         lowBatteryGuard.policy = batterySafetySettings.policy
 
+        thermalSafetySettings.policy = ThermalSafetyPolicy(isEnabled: thermalCheckbox.state == .on)
+        thermalSafetyGuard.policy = thermalSafetySettings.policy
+
         let delay = instantPopup.selectedItem?.representedObject as? TimeInterval
             ?? InstantActivityLockPolicy.defaultIdleArmingDelay
         instantActivityLockSettings.policy = InstantActivityLockPolicy(
@@ -658,6 +676,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         rebuildRuntimeObjects()
         evaluateBatterySafety()
+        evaluateThermalSafety()
         rebuildMenu()
     }
 
@@ -894,12 +913,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         do {
             switch try thermalSafetyGuard.evaluate() {
             case .noAction:
+                hasShownThermalSafetyError = false
                 return
             case let .stoppedSession(state):
+                hasShownThermalSafetyError = false
                 rebuildMenu()
                 showThermalSafetyStoppedAlert(state: state)
             }
         } catch {
+            if hasShownThermalSafetyError {
+                return
+            }
+            hasShownThermalSafetyError = true
             presentError(error, title: "Could Not Apply Thermal Safety")
         }
     }
