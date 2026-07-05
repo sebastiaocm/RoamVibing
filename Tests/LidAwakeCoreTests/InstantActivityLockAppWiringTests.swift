@@ -122,6 +122,15 @@ final class InstantActivityLockAppWiringTests: XCTestCase {
         XCTAssertTrue(readme.contains("default is on"))
     }
 
+    func testReadmeDocumentsThermalSafety() throws {
+        let readme = try readText("README.md")
+
+        XCTAssertTrue(readme.contains("Thermal Safety"))
+        XCTAssertTrue(readme.contains("serious or critical thermal pressure"))
+        XCTAssertTrue(readme.contains("uses macOS thermal pressure instead of raw temperature"))
+        XCTAssertTrue(readme.contains("default is on"))
+    }
+
     private func readText(_ relativePath: String) throws -> String {
         try String(contentsOf: projectRoot().appendingPathComponent(relativePath), encoding: .utf8)
     }

@@ -719,7 +719,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             Use it only on a stable, ventilated surface. Do not put the Mac in a bag while this is enabled. Turn it off before traveling or leaving the machine unattended on battery power.
 
-            Instant Lock on Activity only runs during Closed-Lid Mode. It polls macOS idle-time counters only and does not read keystrokes, capture mouse events, or request Accessibility/Input Monitoring permissions.
+            Thermal Safety uses macOS thermal pressure and turns RoamVibing off when the system reports serious heat pressure. It does not read raw CPU or GPU temperatures.
+
+            Instant Lock on Activity polls macOS idle-time counters only. It does not read keystrokes, capture mouse events, or request Accessibility/Input Monitoring permissions.
             """,
             style: .warning
         )
