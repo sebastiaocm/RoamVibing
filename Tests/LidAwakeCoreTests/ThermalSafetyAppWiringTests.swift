@@ -53,12 +53,17 @@ final class ThermalSafetyAppWiringTests: XCTestCase {
 
     func testAppDelegateBlocksStartingSessionDuringSeriousThermalPressure() throws {
         let source = try readText("Sources/LidAwake/AppDelegate.swift")
+        let blockStart = try section(
+            in: source,
+            from: "private func thermalSafetyShouldBlockStartingSession()",
+            to: "private func showLowBatteryStoppedAlert"
+        )
 
         XCTAssertTrue(source.contains("if batterySafetyShouldBlockStartingSession() || thermalSafetyShouldBlockStartingSession()"))
-        XCTAssertTrue(source.contains("private func thermalSafetyShouldBlockStartingSession() -> Bool"))
-        XCTAssertTrue(source.contains("state.shouldStopRoamVibingSession"))
-        XCTAssertTrue(source.contains("title: \"Thermal Safety Blocked RoamVibing Session\""))
-        XCTAssertTrue(source.contains("macOS reports \\(thermalStateDescription(state)) thermal pressure"))
+        XCTAssertTrue(blockStart.contains("state.shouldStopRoamVibingSession"))
+        XCTAssertTrue(blockStart.contains("title: \"Thermal Safety Blocked RoamVibing Session\""))
+        XCTAssertTrue(blockStart.contains("macOS reports \\(thermalStateDescription(state)) thermal pressure"))
+        XCTAssertTrue(blockStart.contains("Thermal Safety uses macOS thermal pressure, not raw CPU/GPU temperatures."))
     }
 
     func testAppDelegateWiresThermalSafetySettingsCheckbox() throws {
@@ -73,9 +78,9 @@ final class ThermalSafetyAppWiringTests: XCTestCase {
         XCTAssertTrue(showSettings.contains("let thermalCheckbox = NSButton(checkboxWithTitle: \"Enabled\", target: nil, action: nil)"))
         XCTAssertTrue(showSettings.contains("thermalCheckbox.state = thermalPolicy.isEnabled ? .on : .off"))
         XCTAssertTrue(showSettings.contains("thermalCheckbox.setAccessibilityLabel(\"Enable Thermal Safety\")"))
-        XCTAssertTrue(showSettings.contains("thermalCheckbox.setAccessibilityHelp(\"Stops the RoamVibing session when macOS reports serious heat pressure.\")"))
+        XCTAssertTrue(showSettings.contains("thermalCheckbox.setAccessibilityHelp(\"Uses macOS thermal pressure to stop the RoamVibing session at serious or critical pressure. It releases wake blockers so the Mac can cool down and sleep normally, and it does not read raw CPU or GPU temperatures.\")"))
         XCTAssertTrue(showSettings.contains("title: \"Thermal Safety\""))
-        XCTAssertTrue(showSettings.contains("description: \"Stops the RoamVibing session when macOS reports serious heat pressure so the Mac can cool down and sleep normally.\""))
+        XCTAssertTrue(showSettings.contains("description: \"Uses macOS thermal pressure to stop the RoamVibing session at serious or critical pressure. RoamVibing releases wake blockers so the Mac can cool down and sleep normally. It does not read raw CPU or GPU temperatures.\""))
         XCTAssertTrue(showSettings.contains("thermalSafetySettings.policy = ThermalSafetyPolicy(isEnabled: thermalCheckbox.state == .on)"))
         XCTAssertTrue(showSettings.contains("thermalSafetyGuard.policy = thermalSafetySettings.policy"))
         XCTAssertTrue(showSettings.contains("evaluateBatterySafety()\n        evaluateThermalSafety()"))

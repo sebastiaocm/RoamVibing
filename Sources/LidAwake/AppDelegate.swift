@@ -528,7 +528,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let thermalCheckbox = NSButton(checkboxWithTitle: "Enabled", target: nil, action: nil)
         thermalCheckbox.state = thermalPolicy.isEnabled ? .on : .off
         thermalCheckbox.setAccessibilityLabel("Enable Thermal Safety")
-        thermalCheckbox.setAccessibilityHelp("Stops the RoamVibing session when macOS reports serious heat pressure.")
+        thermalCheckbox.setAccessibilityHelp("Uses macOS thermal pressure to stop the RoamVibing session at serious or critical pressure. It releases wake blockers so the Mac can cool down and sleep normally, and it does not read raw CPU or GPU temperatures.")
 
         let instantCheckbox = NSButton(checkboxWithTitle: "Enabled", target: nil, action: nil)
         instantCheckbox.state = instantPolicy.isEnabled ? .on : .off
@@ -604,7 +604,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             ),
             settingsSection(
                 title: "Thermal Safety",
-                description: "Stops the RoamVibing session when macOS reports serious heat pressure so the Mac can cool down and sleep normally.",
+                description: "Uses macOS thermal pressure to stop the RoamVibing session at serious or critical pressure. RoamVibing releases wake blockers so the Mac can cool down and sleep normally. It does not read raw CPU or GPU temperatures.",
                 controls: [
                     thermalCheckbox
                 ]
@@ -996,7 +996,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         showAlert(
             title: "Thermal Safety Blocked RoamVibing Session",
-            message: "macOS reports \(thermalStateDescription(state)) thermal pressure. Let the Mac cool down, improve ventilation, or turn Thermal Safety off.",
+            message: "macOS reports \(thermalStateDescription(state)) thermal pressure. Thermal Safety uses macOS thermal pressure, not raw CPU/GPU temperatures. Let the Mac cool down, improve ventilation, or turn Thermal Safety off.",
             style: .warning
         )
         return true
@@ -1024,7 +1024,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         isShowingThermalSafetyAlert = true
         showAlert(
             title: "Thermal Safety Stopped \(Brand.appName)",
-            message: "macOS reports \(thermalStateDescription(state)) thermal pressure. \(Brand.appName) stopped the RoamVibing session so macOS can sleep normally.",
+            message: "macOS reports \(thermalStateDescription(state)) thermal pressure. \(Brand.appName) stopped the RoamVibing session and released wake blockers so the Mac can cool down and sleep normally. Thermal Safety does not read raw CPU or GPU temperatures.",
             style: .warning
         )
         isShowingThermalSafetyAlert = false

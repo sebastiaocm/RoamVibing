@@ -68,7 +68,7 @@ final class MenuPresentationTests: XCTestCase {
         XCTAssertTrue(source.contains("title: \"Battery Safety\""))
         XCTAssertTrue(source.contains("description: \"Stops the RoamVibing session below your threshold while on battery so macOS can sleep normally.\""))
         XCTAssertTrue(source.contains("title: \"Thermal Safety\""))
-        XCTAssertTrue(source.contains("description: \"Stops the RoamVibing session when macOS reports serious heat pressure so the Mac can cool down and sleep normally.\""))
+        XCTAssertTrue(source.contains("description: \"Uses macOS thermal pressure to stop the RoamVibing session at serious or critical pressure. RoamVibing releases wake blockers so the Mac can cool down and sleep normally. It does not read raw CPU or GPU temperatures.\""))
         XCTAssertTrue(source.contains("title: \"Instant Lock on Activity\""))
         XCTAssertTrue(source.contains("description: \"Only applies to Closed-Lid Mode. After the safety delay, reopening the lid or using the keyboard or mouse locks the screen and turns RoamVibing off. Normal Awake does not use this lock.\""))
         XCTAssertTrue(source.contains("title: \"Mute on Lid Close\""))
@@ -138,6 +138,7 @@ final class MenuPresentationTests: XCTestCase {
         XCTAssertTrue(source.contains("batteryCheckbox.setAccessibilityLabel(\"Enable Battery Safety\")"))
         XCTAssertTrue(source.contains("batteryPopup.setAccessibilityLabel(\"Battery threshold\")"))
         XCTAssertTrue(source.contains("thermalCheckbox.setAccessibilityLabel(\"Enable Thermal Safety\")"))
+        XCTAssertTrue(source.contains("thermalCheckbox.setAccessibilityHelp(\"Uses macOS thermal pressure to stop the RoamVibing session at serious or critical pressure. It releases wake blockers so the Mac can cool down and sleep normally, and it does not read raw CPU or GPU temperatures.\")"))
         XCTAssertTrue(source.contains("instantCheckbox.setAccessibilityLabel(\"Enable Instant Lock on Activity\")"))
         XCTAssertTrue(source.contains("instantCheckbox.setAccessibilityHelp(\"Only applies to Closed-Lid Mode. Normal Awake does not use this lock.\")"))
         XCTAssertTrue(source.contains("instantPopup.setAccessibilityLabel(\"Safety delay\")"))
@@ -150,6 +151,21 @@ final class MenuPresentationTests: XCTestCase {
 
     func testAlertsUseSeverityAppropriateStyles() throws {
         let source = try readText("Sources/LidAwake/AppDelegate.swift")
+        let blockedThermalAlert = try section(
+            in: source,
+            from: "private func thermalSafetyShouldBlockStartingSession()",
+            to: "private func showLowBatteryStoppedAlert"
+        )
+        let stoppedThermalAlert = try section(
+            in: source,
+            from: "private func showThermalSafetyStoppedAlert",
+            to: "private func thermalStateDescription"
+        )
+        let safetyNotes = try section(
+            in: source,
+            from: "@objc private func showSafetyNotes()",
+            to: "private func showAlert"
+        )
 
         XCTAssertTrue(source.contains("private func showAlert(title: String, message: String, style: NSAlert.Style = .informational)"))
         XCTAssertTrue(source.contains("presentError(error, title: errorTitle)"))
@@ -160,9 +176,13 @@ final class MenuPresentationTests: XCTestCase {
         XCTAssertTrue(source.contains("title: \"Battery Safety Stopped \\(Brand.appName)\","))
         XCTAssertTrue(source.contains("title: \"Thermal Safety Blocked RoamVibing Session\","))
         XCTAssertTrue(source.contains("title: \"Thermal Safety Stopped \\(Brand.appName)\","))
-        XCTAssertTrue(source.contains("Thermal Safety uses macOS thermal pressure and stops the RoamVibing session when the system reports serious or critical thermal pressure."))
-        XCTAssertTrue(source.contains("It releases wake blockers so the Mac can cool down and sleep normally."))
-        XCTAssertTrue(source.contains("It does not read raw CPU or GPU temperatures."))
+        XCTAssertTrue(blockedThermalAlert.contains("Thermal Safety uses macOS thermal pressure, not raw CPU/GPU temperatures."))
+        XCTAssertTrue(stoppedThermalAlert.contains("stopped the RoamVibing session and released wake blockers"))
+        XCTAssertTrue(stoppedThermalAlert.contains("Mac can cool down and sleep normally"))
+        XCTAssertTrue(stoppedThermalAlert.contains("Thermal Safety does not read raw CPU or GPU temperatures."))
+        XCTAssertTrue(safetyNotes.contains("Thermal Safety uses macOS thermal pressure and stops the RoamVibing session when the system reports serious or critical thermal pressure."))
+        XCTAssertTrue(safetyNotes.contains("It releases wake blockers so the Mac can cool down and sleep normally."))
+        XCTAssertTrue(safetyNotes.contains("It does not read raw CPU or GPU temperatures."))
     }
 
     func testMenuTitlesDoNotUseTrailingEllipsesAsGenericDecoration() throws {
@@ -198,6 +218,12 @@ final class MenuPresentationTests: XCTestCase {
 
     private func readText(_ relativePath: String) throws -> String {
         try String(contentsOf: projectRoot().appendingPathComponent(relativePath), encoding: .utf8)
+    }
+
+    private func section(in source: String, from start: String, to end: String) throws -> String {
+        let startRange = try XCTUnwrap(source.range(of: start))
+        let endRange = try XCTUnwrap(source[startRange.upperBound...].range(of: end))
+        return String(source[startRange.lowerBound..<endRange.lowerBound])
     }
 
     private func projectRoot() -> URL {
