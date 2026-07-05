@@ -94,7 +94,7 @@ final class InstantActivityLockAppWiringTests: XCTestCase {
     func testInstantLockDialogExplainsDelayTriggerAndOneShotShutdown() throws {
         let source = try readText("Sources/LidAwake/AppDelegate.swift")
 
-        XCTAssertTrue(source.contains("Gives you time to close the lid, then locks and turns RoamVibing off when the lid opens or input resumes."))
+        XCTAssertTrue(source.contains("Only applies to Closed-Lid Mode. After the safety delay, reopening the lid or using the keyboard or mouse locks the screen and turns RoamVibing off. Normal Awake does not use this lock."))
         XCTAssertTrue(source.contains("Safety delay"))
         XCTAssertFalse(source.contains("The idle delay gives you time to start the RoamVibing session and close the lid without immediately locking the screen."))
         XCTAssertFalse(source.contains("After that delay, reopening the lid or using the keyboard or mouse locks the screen and turns \\(Brand.appName) off."))
@@ -107,9 +107,10 @@ final class InstantActivityLockAppWiringTests: XCTestCase {
         let readme = try readText("README.md")
 
         XCTAssertTrue(readme.contains("Instant Lock on Activity"))
+        XCTAssertTrue(readme.contains("applies only to Closed-Lid Mode"))
+        XCTAssertTrue(readme.contains("Normal Awake does not use this lock"))
         XCTAssertTrue(readme.contains("keyboard or mouse input"))
         XCTAssertTrue(readme.contains("lid opens"))
-        XCTAssertTrue(readme.contains("one-shot per RoamVibing session"))
     }
 
     func testReadmeDocumentsSettingsAndMuteOnLidClose() throws {

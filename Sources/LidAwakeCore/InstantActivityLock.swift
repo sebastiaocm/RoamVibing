@@ -87,7 +87,7 @@ public final class InstantActivityLockGuard {
             return .noAction
         }
 
-        guard session.state != .stopped else {
+        guard session.state == .running(.closedLid) else {
             reset()
             return .noAction
         }

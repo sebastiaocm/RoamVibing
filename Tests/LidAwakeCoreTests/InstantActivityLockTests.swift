@@ -16,7 +16,7 @@ final class InstantActivityLockTests: XCTestCase {
             policy: InstantActivityLockPolicy(isEnabled: true, idleArmingDelay: 5)
         )
 
-        try session.start(mode: .normal)
+        try session.start(mode: .closedLid)
 
         let result = try guardrail.evaluate()
 
@@ -39,7 +39,7 @@ final class InstantActivityLockTests: XCTestCase {
             policy: InstantActivityLockPolicy(isEnabled: true, idleArmingDelay: 5)
         )
 
-        try session.start(mode: .normal)
+        try session.start(mode: .closedLid)
         XCTAssertEqual(try guardrail.evaluate(), .armed)
         input.idleSeconds = 0.2
 
@@ -66,7 +66,7 @@ final class InstantActivityLockTests: XCTestCase {
             policy: InstantActivityLockPolicy(isEnabled: true, idleArmingDelay: 5)
         )
 
-        try session.start(mode: .normal)
+        try session.start(mode: .closedLid)
         XCTAssertEqual(try guardrail.evaluate(), .noAction)
 
         lid.state = .open
@@ -91,12 +91,38 @@ final class InstantActivityLockTests: XCTestCase {
             policy: InstantActivityLockPolicy(isEnabled: true, idleArmingDelay: 5)
         )
 
-        try session.start(mode: .normal)
+        try session.start(mode: .closedLid)
 
         let result = try guardrail.evaluate()
 
         XCTAssertEqual(result, .noAction)
         XCTAssertEqual(locker.lockCount, 0)
+    }
+
+    func testNormalAwakeSessionDoesNotArmOrLock() throws {
+        let session = AwakeSession(
+            assertions: RecordingAssertionManager(),
+            closedLidPower: RecordingClosedLidPowerManager()
+        )
+        let input = RecordingInputActivityReader(idleSeconds: 5)
+        let lid = RecordingLidStateReader(state: .closed)
+        let locker = RecordingScreenLocker()
+        let guardrail = InstantActivityLockGuard(
+            session: session,
+            inputActivityReader: input,
+            lidStateReader: lid,
+            screenLocker: locker,
+            policy: InstantActivityLockPolicy(isEnabled: true, idleArmingDelay: 5)
+        )
+
+        try session.start(mode: .normal)
+
+        let result = try guardrail.evaluate()
+
+        XCTAssertEqual(result, .noAction)
+        XCTAssertEqual(input.readCount, 0)
+        XCTAssertEqual(locker.lockCount, 0)
+        XCTAssertEqual(session.state, .running(.normal))
     }
 
     func testDisabledPolicyDoesNotReadInputOrLock() throws {
@@ -113,7 +139,7 @@ final class InstantActivityLockTests: XCTestCase {
             policy: InstantActivityLockPolicy(isEnabled: false, idleArmingDelay: 5)
         )
 
-        try session.start(mode: .normal)
+        try session.start(mode: .closedLid)
 
         let result = try guardrail.evaluate()
 
@@ -156,7 +182,7 @@ final class InstantActivityLockTests: XCTestCase {
             policy: InstantActivityLockPolicy(isEnabled: true, idleArmingDelay: 5)
         )
 
-        try session.start(mode: .normal)
+        try session.start(mode: .closedLid)
         XCTAssertEqual(try guardrail.evaluate(), .armed)
         input.idleSeconds = 0.1
         XCTAssertEqual(try guardrail.evaluate(), .locked)
@@ -168,7 +194,7 @@ final class InstantActivityLockTests: XCTestCase {
 
         XCTAssertEqual(locker.lockCount, 1)
 
-        try session.start(mode: .normal)
+        try session.start(mode: .closedLid)
         guardrail.resetForSessionStart()
         input.idleSeconds = 5
         XCTAssertEqual(try guardrail.evaluate(), .armed)

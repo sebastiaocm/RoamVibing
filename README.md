@@ -9,7 +9,7 @@ It has two modes and safety settings grouped under the menu-bar `Settings` item:
 - `Normal Awake`: uses IOKit power assertions. This is non-admin and prevents idle sleep while the lid stays open.
 - `Closed-Lid Mode`: asks for administrator permission and runs `/usr/bin/pmset -a disablesleep 1`, then verifies macOS reports `SleepDisabled 1`. Use this only when you need the MacBook closed without an external display. Turning it off runs `/usr/bin/pmset -a disablesleep 0` and verifies `SleepDisabled 0`.
 - `Battery Safety`: optionally stops the RoamVibing session when the Mac is running on battery at or below your chosen threshold. The default is on at 20%.
-- `Instant Lock on Activity`: arms after a short idle period while a RoamVibing session is running. When the lid opens after being closed, or when keyboard or mouse input is detected, it locks the screen immediately and turns the active RoamVibing session off. This is one-shot per RoamVibing session so the next time you close the lid, macOS can sleep normally.
+- `Instant Lock on Activity`: applies only to Closed-Lid Mode. It arms after a short safety delay, then locks the screen when the lid opens after being closed or when keyboard or mouse input is detected. It turns the active RoamVibing session off, so the next time you close the lid macOS can sleep normally. Normal Awake does not use this lock.
 - `Mute on Lid Close`: the default is on. When macOS reports the lid closing during a RoamVibing session, RoamVibing mutes active audio output devices through CoreAudio. It does not unmute when the lid opens.
 
 ## Requirements
@@ -56,6 +56,6 @@ Closed-lid mode disables sleep at the power-management level. Use it on a stable
 
 Battery Safety does not force an immediate sleep command. It releases RoamVibing's wake blockers, and if Closed-Lid Mode is active it disables the closed-lid bypass, so macOS can sleep normally.
 
-Instant Lock on Activity uses macOS clamshell state when available, plus aggregate idle-time counters as a fallback. It does not read keystrokes, capture mouse events, use an event tap, or request Accessibility/Input Monitoring permissions.
+Instant Lock on Activity only runs during Closed-Lid Mode. It uses macOS clamshell state when available, plus aggregate idle-time counters as a fallback. It does not read keystrokes, capture mouse events, use an event tap, or request Accessibility/Input Monitoring permissions.
 
 Mute on Lid Close uses CoreAudio to mute currently active output devices plus the default output routes. It does not change microphone input, record audio, use Accessibility permissions, use event taps, or contact the network.

@@ -502,7 +502,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let instantCheckbox = NSButton(checkboxWithTitle: "Enabled", target: nil, action: nil)
         instantCheckbox.state = instantPolicy.isEnabled ? .on : .off
         instantCheckbox.setAccessibilityLabel("Enable Instant Lock on Activity")
-        instantCheckbox.setAccessibilityHelp("Locks the screen and turns RoamVibing off when activity resumes after the safety delay.")
+        instantCheckbox.setAccessibilityHelp("Only applies to Closed-Lid Mode. Normal Awake does not use this lock.")
 
         let instantPopup = NSPopUpButton(frame: .zero, pullsDown: false)
         for delay in InstantLock.armingDelays {
@@ -519,7 +519,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         instantCheckbox.tag = 3
         instantPopup.tag = 4
         instantPopup.setAccessibilityLabel("Safety delay")
-        instantPopup.setAccessibilityHelp("Choose how long RoamVibing waits before activity can trigger an instant lock.")
+        instantPopup.setAccessibilityHelp("Choose the Closed-Lid Mode safety delay before activity can trigger an instant lock.")
 
         let muteCheckbox = NSButton(checkboxWithTitle: "Enabled", target: nil, action: nil)
         muteCheckbox.state = mutePolicy.isEnabled ? .on : .off
@@ -573,7 +573,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             ),
             settingsSection(
                 title: "Instant Lock on Activity",
-                description: "Gives you time to close the lid, then locks and turns RoamVibing off when the lid opens or input resumes.",
+                description: "Only applies to Closed-Lid Mode. After the safety delay, reopening the lid or using the keyboard or mouse locks the screen and turns RoamVibing off. Normal Awake does not use this lock.",
                 controls: [
                     instantCheckbox,
                     settingsRow(title: "Safety delay", popup: instantPopup)
@@ -677,7 +677,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             Use it only on a stable, ventilated surface. Do not put the Mac in a bag while this is enabled. Turn it off before traveling or leaving the machine unattended on battery power.
 
-            Instant Lock on Activity polls macOS idle-time counters only. It does not read keystrokes, capture mouse events, or request Accessibility/Input Monitoring permissions.
+            Instant Lock on Activity only runs during Closed-Lid Mode. It polls macOS idle-time counters only and does not read keystrokes, capture mouse events, or request Accessibility/Input Monitoring permissions.
             """,
             style: .warning
         )
