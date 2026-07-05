@@ -43,6 +43,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         static let checkInterval: TimeInterval = 30
     }
 
+    private enum ThermalSafety {
+        static let checkInterval: TimeInterval = 30
+    }
+
     private enum InstantLock {
         static let armingDelays: [TimeInterval] = [5, 10, 30, 60]
         static let checkInterval: TimeInterval = 0.2
@@ -98,24 +102,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let powerOperationQueue = DispatchQueue(label: "com.local.RoamVibing.power-operation")
     private let helperOperationQueue = DispatchQueue(label: "com.local.RoamVibing.helper-operation")
     private let batterySafetySettings = BatterySafetySettingsStore()
+    private let thermalSafetySettings = ThermalSafetySettingsStore()
     private let instantActivityLockSettings = InstantActivityLockSettingsStore()
     private let muteOnLidCloseSettings = MuteOnLidCloseSettingsStore()
     private let batteryReader = IOKitBatteryReader()
+    private let thermalStateReader = MacThermalStateReader()
     private let inputActivityReader = MacInputActivityReader()
     private let lidStateReader = MacLidStateReader()
     private var batterySafetyTimer: Timer?
+    private var thermalSafetyTimer: Timer?
     private var instantActivityLockTimer: Timer?
     private var isShowingLowBatteryAlert = false
+    private var isShowingThermalSafetyAlert = false
     private var activePowerOperation: PowerOperation?
     private var activeHelperOperation: HelperOperation?
     private lazy var session = makeSession()
     private lazy var lowBatteryGuard = makeLowBatteryGuard()
+    private lazy var thermalSafetyGuard = makeThermalSafetyGuard()
     private lazy var instantActivityLockGuard = makeInstantActivityLockGuard()
     private lazy var muteOnLidCloseGuard = makeMuteOnLidCloseGuard()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         configureStatusItem()
         startBatterySafetyTimer()
+        startThermalSafetyTimer()
         startInstantActivityLockTimer()
         rebuildMenu()
     }
@@ -133,6 +143,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         do {
             try session.stop(intent: .safety)
             batterySafetyTimer?.invalidate()
+            thermalSafetyTimer?.invalidate()
             instantActivityLockTimer?.invalidate()
             return .terminateNow
         } catch {
@@ -243,6 +254,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
     }
 
+    private func makeThermalSafetyGuard() -> ThermalSafetyGuard {
+        ThermalSafetyGuard(
+            session: session,
+            thermalStateReader: thermalStateReader,
+            policy: thermalSafetySettings.policy
+        )
+    }
+
     private func makeInstantActivityLockGuard() -> InstantActivityLockGuard {
         InstantActivityLockGuard(
             session: session,
@@ -271,6 +290,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             session: session,
             batteryReader: batteryReader,
             policy: batterySafetySettings.policy
+        )
+        thermalSafetyGuard = ThermalSafetyGuard(
+            session: session,
+            thermalStateReader: thermalStateReader,
+            policy: thermalSafetySettings.policy
         )
         instantActivityLockGuard = InstantActivityLockGuard(
             session: session,
@@ -693,7 +717,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        if batterySafetyShouldBlockStartingSession() {
+        if batterySafetyShouldBlockStartingSession() || thermalSafetyShouldBlockStartingSession() {
             return
         }
 
@@ -708,6 +732,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.instantActivityLockGuard.resetForSessionStart()
                 self.muteOnLidCloseGuard.reset()
                 self.evaluateBatterySafety()
+                self.evaluateThermalSafety()
             }
             return
         }
@@ -722,6 +747,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         rebuildMenu()
         evaluateBatterySafety()
+        evaluateThermalSafety()
     }
 
     private func beginPowerOperation(
@@ -815,6 +841,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         batterySafetyTimer?.tolerance = 5
     }
 
+    private func startThermalSafetyTimer() {
+        thermalSafetyTimer?.invalidate()
+        thermalSafetyTimer = Timer.scheduledTimer(
+            withTimeInterval: ThermalSafety.checkInterval,
+            repeats: true
+        ) { [weak self] _ in
+            self?.evaluateThermalSafety()
+        }
+        thermalSafetyTimer?.tolerance = 5
+    }
+
     private func startInstantActivityLockTimer() {
         instantActivityLockTimer?.invalidate()
         instantActivityLockTimer = Timer.scheduledTimer(
@@ -844,6 +881,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         } catch {
             presentError(error, title: "Could Not Apply Battery Safety")
+        }
+    }
+
+    private func evaluateThermalSafety() {
+        guard activePowerOperation == nil else {
+            return
+        }
+
+        thermalSafetyGuard.policy = thermalSafetySettings.policy
+
+        do {
+            switch try thermalSafetyGuard.evaluate() {
+            case .noAction:
+                return
+            case let .stoppedSession(state):
+                rebuildMenu()
+                showThermalSafetyStoppedAlert(state: state)
+            }
+        } catch {
+            presentError(error, title: "Could Not Apply Thermal Safety")
         }
     }
 
@@ -900,6 +957,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
 
+    private func thermalSafetyShouldBlockStartingSession() -> Bool {
+        let policy = thermalSafetySettings.policy
+        guard policy.isEnabled else {
+            return false
+        }
+
+        let state = thermalStateReader.currentThermalState()
+        guard state.shouldStopRoamVibingSession else {
+            return false
+        }
+
+        showAlert(
+            title: "Thermal Safety Blocked RoamVibing Session",
+            message: "macOS reports \(thermalStateDescription(state)) thermal pressure. Let the Mac cool down, improve ventilation, or turn Thermal Safety off.",
+            style: .warning
+        )
+        return true
+    }
+
     private func showLowBatteryStoppedAlert(percentage: Int, threshold: Int) {
         guard !isShowingLowBatteryAlert else {
             return
@@ -912,6 +988,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             style: .warning
         )
         isShowingLowBatteryAlert = false
+    }
+
+    private func showThermalSafetyStoppedAlert(state: ThermalPressureState) {
+        guard !isShowingThermalSafetyAlert else {
+            return
+        }
+
+        isShowingThermalSafetyAlert = true
+        showAlert(
+            title: "Thermal Safety Stopped \(Brand.appName)",
+            message: "macOS reports \(thermalStateDescription(state)) thermal pressure. \(Brand.appName) stopped the RoamVibing session so macOS can sleep normally.",
+            style: .warning
+        )
+        isShowingThermalSafetyAlert = false
+    }
+
+    private func thermalStateDescription(_ state: ThermalPressureState) -> String {
+        switch state {
+        case .nominal:
+            return "nominal"
+        case .fair:
+            return "fair"
+        case .serious:
+            return "serious"
+        case .critical:
+            return "critical"
+        }
     }
 
     private func settingsSection(title: String, description: String, controls: [NSView]) -> NSView {
